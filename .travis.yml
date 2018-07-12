@@ -7,12 +7,20 @@ os:
 rust:
 - nightly
 script:
-- cargo build --verbose --features "pulseaudio_backend"
-- cargo build --release
+- PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig PKG_CONFIG_ALLOW_CROSS=1 cargo build --target=aarch64-unknown-linux-gnu --release --features "pulseaudio_backend"
 - zip -j spotifyd-`date --iso-8601`-amd64.zip target/release/spotifyd
 before_install:
+- sudo dpkg --add-architecture aarch64
+- sed 's/deb http/deb \[arch=amd64,i386\] http/' -i /etc/apt/sources.list
+- echo >/etc/apt/sources.list <<EOF
+- deb [arch=aarch64] http://ports.ubuntu.com/ $(lsb_release -cs) main universe restricted multiverse
+- deb [arch=aarch64] http://ports.ubuntu.com/ $(lsb_release -cs)-updates main universe restricted multiverse
+- deb [arch=aarch64] http://ports.ubuntu.com/ $(lsb_release -cs)-security main universe restricted multiverse
 - sudo apt-get -qq update
-- sudo apt-get install -y libasound2-dev portaudio19-dev build-essential libpulse-dev libdbus-1-dev
+- sudo apt-get install -y libasound2-dev:aarch64 portaudio19-dev:aarch64 build-essential:aarch64 libpulse-dev:aarch64 libdbus-1-dev:aarch64 libssl-dev:aarch64 libasound2-dev:aarch64
+- sudo apt remove rustc
+- curl https://sh.rustup.rs -sSf | sh
+- rustup target add aarch64-unknown-linux-gnu
 services:
 - docker
 before_deploy: "./build-release"
